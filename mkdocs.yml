@@ -1,0 +1,12 @@
+# mkdocs.yml
+
+site_name: pylaons
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - Loan Class: index.md
