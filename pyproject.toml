@@ -5,6 +5,7 @@ description = "A package to generate, analyze and work with simple installment l
 authors = ["Sandeep <sandeep.kavadi.uc@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include="pyloans", from="src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

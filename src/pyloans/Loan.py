@@ -8,8 +8,8 @@ import pandas as pd
 
 
 class Loan:
-    """Loan class to create loan instances. To be initialized with the
-    following parameters:
+    """Loan class to create instances of installment loans.
+     To be initialized with the following parameters:
         1. loan_amount:float - The Original loan amount (principal) disbursed
         on the loan date.
         2. int_rate:float - original rate of interest applicable on the
@@ -45,8 +45,9 @@ class Loan:
     }
 
     def __init__(
-        self, loan_amt: float, int_rate: float, fees_pct: float, term: float,
-        segment: str, channel: str, loan_dt: str, freq: str = 'M',
+        self, loan_amt: float, int_rate: float, term: float, loan_dt: str,
+            freq: str = 'M', fees_pct: float = 0.0,
+            segment: str = 'c', channel: str = 'free',
     ):
         self.loan_amt = loan_amt
         self.int_rate = int_rate
@@ -75,16 +76,16 @@ class Loan:
                 self.loan_dt, freq=self._offset, periods=self._periods+1,
             ),
         ).shift(-1).dropna()
-        df['period'] = df.index
+        df['period'] = df.index+1
         df['interest_pmt'] = - \
             npf.ipmt(
                 self._period_int_rate,
-                df['period']+1, self._periods, self.loan_amt,
+                df['period'], self._periods, self.loan_amt,
             )
         df['principal_pmt'] = - \
             npf.ppmt(
                 self._period_int_rate,
-                df['period']+1, self._periods, self.loan_amt,
+                df['period'], self._periods, self.loan_amt,
             )
         df['closing_principal'] = self.loan_amt-df['principal_pmt'].cumsum()
         df['opening_principal'] = df['closing_principal'].shift(
@@ -112,4 +113,4 @@ class Loan:
         loan can be defined as the
         total financial cost of the loan (including fees) divided by the WAL of
         the loan."""
-        return self.int_rate+(self.fees_pct/self.wal)
+        return self.int_rate+(self.fees_pct/(self.wal/12))
