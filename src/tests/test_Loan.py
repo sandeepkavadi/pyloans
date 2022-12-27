@@ -14,11 +14,12 @@ import pytest
 )
 def test_cf_mechanics(test_input: tuple, expected: tuple) -> None:
     """Test to check the cah-flows generated including, WAL and APR."""
-    ir, t, fr, fe = test_input
+    ir, t, frq, fee = test_input
     exp_rows, exp_apr, exp_wal = expected
     l1 = pyl.Loan(
-        loan_amt=10000, int_rate=ir, term=t, loan_dt='2022-12-12',
-        freq=fr, fees_pct=fe,
+        loan_amt=10000, interest_rate=ir, term_in_months=t,
+        loan_dt='2022-12-12',
+        freq=frq, fees_pct=fee,
     )
     df = l1.get_cfsch()
     assert df.shape[0] == exp_rows

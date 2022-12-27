@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import datetime as dt
 import math
 
-import arrow
 import numpy_financial as npf
 import pandas as pd
 
@@ -39,29 +39,34 @@ class Loan:
         'BM': pd.DateOffset(days=0, months=2),
         'Q': 'Q', 'H': '2Q', 'Y': 'Y',
     }
-    period_offset = {
-        'W': 7.0/30, '2W': 14.0/30,
+    period_to_months = {
+        'W': 7.0 / 30, '2W': 14.0 / 30,
         'M': 1, 'BM': 2, 'Q': 3, 'H': 6, 'Y': 12,
     }
 
     def __init__(
-        self, loan_amt: float, int_rate: float, term: float, loan_dt: str,
+            self, loan_amt: float, interest_rate: float, term_in_months: float,
+            loan_dt:
+            str,
             freq: str = 'M', fees_pct: float = 0.0,
             segment: str = 'c', channel: str = 'free',
     ):
         self.loan_amt = loan_amt
-        self.int_rate = int_rate
+        self.interest_rate = interest_rate
         self.fees_pct = fees_pct
-        self.term = term
+        self.term_in_months = term_in_months
         self.segment = segment
         self.channel = channel
-        self.loan_dt = arrow.get(loan_dt).datetime
+        self.loan_dt = dt.datetime.strptime(loan_dt, '%Y-%m-%d')
         self.freq = freq
         self._offset = self.freq_offset[self.freq]
-        self._periods = math.ceil(self.term/self.period_offset[self.freq])
-        self._period_int_rate = self.int_rate*self.period_offset[self.freq]/12
+        self._periods = math.ceil(
+            self.term_in_months / self.period_to_months[self.freq],
+        )
+        self._period_interest_rate = self.interest_rate * self \
+            .period_to_months[self.freq] / 12
         self.pmt = -npf.pmt(
-            self._period_int_rate,
+            self._period_interest_rate,
             self._periods, self.loan_amt,
         )
 
@@ -73,24 +78,28 @@ class Loan:
         df = pd.DataFrame()
         df['dates'] = pd.Series(
             pd.date_range(
-                self.loan_dt, freq=self._offset, periods=self._periods+1,
+                self.loan_dt, freq=self._offset, periods=self._periods + 1,
             ),
         ).shift(-1).dropna()
-        df['period'] = df.index+1
+        df['period'] = df.index + 1
         df['interest_pmt'] = - \
             npf.ipmt(
-                self._period_int_rate,
+                self._period_interest_rate,
                 df['period'], self._periods, self.loan_amt,
             )
         df['principal_pmt'] = - \
             npf.ppmt(
-                self._period_int_rate,
+                self._period_interest_rate,
                 df['period'], self._periods, self.loan_amt,
             )
-        df['closing_principal'] = self.loan_amt-df['principal_pmt'].cumsum()
+        df['closing_principal'] = self.loan_amt - df['principal_pmt'].cumsum()
         df['opening_principal'] = df['closing_principal'].shift(
             1,
         ).fillna(self.loan_amt)
+        df = df[[
+            'dates', 'period', 'opening_principal', 'interest_pmt',
+            'principal_pmt', 'closing_principal',
+        ]]
         return df
 
     @property
@@ -102,8 +111,8 @@ class Loan:
         principal of the loan
         to be repaid, if the borrower repays by the original schedule."""
         _cfs = self.get_cfsch()
-        return (_cfs['principal_pmt']*_cfs['period']).sum() * \
-            self.period_offset[self.freq]/self.loan_amt
+        return (_cfs['principal_pmt'] * _cfs['period']).sum() * \
+            self.period_to_months[self.freq] / self.loan_amt
 
     @property
     def apr(self) -> float:
@@ -113,4 +122,60 @@ class Loan:
         loan can be defined as the
         total financial cost of the loan (including fees) divided by the WAL of
         the loan."""
-        return self.int_rate+(self.fees_pct/(self.wal/12))
+        return self.interest_rate + (self.fees_pct / (self.wal / 12))
+
+    def get_modcfs(self, addl_pmts: dict) -> None:
+        cols = [
+            'dates', 'period', 'opening_principal',
+            'opening_accrued_interest',
+            'current_period_interest', 'interest_pmt', 'principal_pmt',
+            'additional_pmt', 'total_pmt', 'closing_principal',
+        ]
+        df = self.get_cfsch()
+        df['additional_pmt'] = pd.Series(
+            addl_pmts,
+            index=df.index,
+        ).fillna(0)
+        df['opening_accrued_interest'] = 0
+        df['current_period_interest'] = 0
+        df['closing_accrued_interest'] = 0
+        df['total_pmt'] = 0
+        cl_p = self.loan_amt
+        cl_ai = 0   # opening accrued interest
+        for idx, row in df.iterrows():
+            row.loc['opening_principal'] = cl_p
+            row.loc['opening_accrued_interest'] = cl_ai
+            row.loc['current_period_interest'] = \
+                row.loc['opening_principal'] * self._period_interest_rate
+            row.loc['total_pmt'] = min(
+                row.loc['interest_pmt'] +
+                row.loc['principal_pmt'] +
+                row.loc['additional_pmt'],
+                row.loc['opening_principal'] +
+                row.loc['opening_accrued_interest'] +
+                row.loc['current_period_interest'],
+            )
+            row.loc['closing_accrued_interest'] = \
+                max(
+                    0,
+                    row.loc['opening_accrued_interest'] +
+                    row.loc['current_period_interest'] -
+                    row.loc['total_pmt'],
+                )
+            cl_ai = row.loc['closing_accrued_interest']
+            row.loc['closing_principal'] = \
+                max(
+                    0,
+                    row.loc['opening_principal'] +
+                    row.loc['opening_accrued_interest'] +
+                    row.loc['current_period_interest'] -
+                    row.loc['total_pmt'],
+                )
+            cl_p = row.loc['closing_principal']
+            df.loc[idx, cols] = row.loc[cols]
+        return df[[
+            col for col in cols if col not in [
+                'interest_pmt',
+                'principal_pmt',
+            ]
+        ]]

@@ -1,1 +1,1 @@
-::: src.Loan
+::: pyloans.Loan

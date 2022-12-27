@@ -1,6 +1,6 @@
 # mkdocs.yml
 
-site_name: pylaons
+site_name: pyloans
 
 theme:
   name: "material"
