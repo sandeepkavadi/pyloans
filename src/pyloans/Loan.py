@@ -152,7 +152,7 @@ class Loan:
         if addl_pmts:
             df['additional_pmt'] = pd.Series(
                 addl_pmts, index=df.index,
-            ).fillna(0)
+            ).shift(-1).fillna(0)
             for idx, row in df.iterrows():
                 row.loc['opening_principal'] = cl_p
                 row.loc['opening_accrued_interest'] = cl_ai
@@ -194,6 +194,10 @@ class Loan:
     @property
     def mod_wal(self) -> float:
         return self._wal(self.get_mod_cfs())
+
+    @property
+    def mod_apr(self) -> float:
+        return self.interest_rate + (self.fees_pct / (self.mod_wal / 12))
 
     def _maturity(self) -> np.int64:
         _cfs = self.get_mod_cfs()
