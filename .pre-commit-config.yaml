@@ -41,3 +41,11 @@ repos:
     hooks:
     -   id: blacken-docs
       #      additional_dependencies: [black==1]
+-  repo: local
+   hooks:
+   -    id: pytest-check
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true      #

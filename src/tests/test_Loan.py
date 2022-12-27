@@ -21,7 +21,7 @@ def test_cf_mechanics(test_input: tuple, expected: tuple) -> None:
         loan_dt='2022-12-12',
         freq=frq, fees_pct=fee,
     )
-    df = l1.get_cfsch()
+    df = l1.get_org_cfs()
     assert df.shape[0] == exp_rows
-    assert round(l1.apr, 4) == exp_apr
-    assert round(l1.wal, 2) == exp_wal
+    assert round(l1.org_apr, 4) == exp_apr
+    assert round(l1.org_wal, 2) == exp_wal
