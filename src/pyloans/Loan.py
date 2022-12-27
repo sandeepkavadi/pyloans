@@ -148,7 +148,7 @@ class Loan:
         ]
         df = self.get_org_cfs()
         cl_p = self.loan_amt
-        cl_ai = 0   # opening accrued interest
+        cl_ai = 0   # accrued interest for 1st period
         if addl_pmts:
             df['additional_pmt'] = pd.Series(
                 addl_pmts, index=df.index,
