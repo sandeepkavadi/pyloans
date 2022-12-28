@@ -8,6 +8,10 @@ import numpy_financial as npf
 import pandas as pd
 
 
+class PrepaymentException(Exception):
+    pass
+
+
 class Loan:
     """Loan class to create instances of installment loans.
      To be initialized with the following parameters:
@@ -44,6 +48,11 @@ class Loan:
         'W': 7.0 / 30, '2W': 14.0 / 30,
         'M': 1, 'BM': 2, 'Q': 3, 'H': 6, 'Y': 12,
     }
+    cols = [
+        'dates', 'period', 'opening_principal', 'opening_accrued_interest',
+        'current_period_interest', 'interest_pmt', 'principal_pmt',
+        'additional_pmt', 'total_pmt', 'closing_principal',
+    ]
 
     def __init__(
             self, loan_amt: float, interest_rate: float, term_in_months: float,
@@ -57,7 +66,7 @@ class Loan:
         self.loan_dt = dt.datetime.strptime(loan_dt, '%Y-%m-%d')
         self.freq = freq
         self.fees_pct = fees_pct
-        self.addl_pmts = addl_pmts
+        self.addl_pmts = addl_pmts if addl_pmts else {}
         self.segment = segment
         self.channel = channel
         self._offset = self.freq_offset[self.freq]
@@ -70,6 +79,10 @@ class Loan:
             self._period_interest_rate,
             self._periods, self.loan_amt,
         )
+        self.fully_prepaid = 0
+        self.original_cfs = self.get_org_cfs()
+        self.updated_cfs = self.original_cfs
+        self.updated_cfs = self._get_mod_cfs()
 
     def get_org_cfs(self) -> pd.DataFrame:
         """Method to get the original scheduled of cashflows for a given loan.
@@ -102,15 +115,12 @@ class Loan:
             index=df.index,
         ).fillna(0)
         df['current_period_interest'] = df['interest_pmt']
-        df['total_pmt'] = df['interest_pmt'] + df['principal_pmt']
-        df['closing_accrued_interest'] = 0
         df['opening_accrued_interest'] = 0
-        df = df[[
-            'dates', 'period', 'opening_principal',
-            'opening_accrued_interest', 'current_period_interest',
-            'interest_pmt', 'principal_pmt', 'total_pmt',
-            'closing_accrued_interest', 'closing_principal',
-        ]]
+        df['closing_accrued_interest'] = 0
+        df['additional_pmt'] = 0
+        df['total_pmt'] = df['interest_pmt'] + df['principal_pmt'] + \
+            df['additional_pmt']
+        df = df[self.cols]
         return df
 
     def _wal(self, _df: pd.DataFrame) -> float:
@@ -138,69 +148,70 @@ class Loan:
         the loan."""
         return self.interest_rate + (self.fees_pct / (self.org_wal / 12))
 
-    def get_mod_cfs(self, addl_pmts: dict | None = None) -> pd.dataFrame:
-        addl_pmts = addl_pmts if addl_pmts else self.addl_pmts
-        cols = [
-            'dates', 'period', 'opening_principal',
-            'opening_accrued_interest',
-            'current_period_interest', 'interest_pmt', 'principal_pmt',
-            'additional_pmt', 'total_pmt', 'closing_principal',
-        ]
-        df = self.get_org_cfs()
-        cl_p = self.loan_amt
-        cl_ai = 0   # accrued interest for 1st period
-        if addl_pmts:
-            df['additional_pmt'] = pd.Series(
-                addl_pmts, index=df.index,
-            ).shift(-1).fillna(0)
-            for idx, row in df.iterrows():
-                row.loc['opening_principal'] = cl_p
-                row.loc['opening_accrued_interest'] = cl_ai
-                row.loc['current_period_interest'] = \
-                    row.loc['opening_principal'] * self._period_interest_rate
-                row.loc['total_pmt'] = min(
-                    row.loc['interest_pmt'] +
-                    row.loc['principal_pmt'] +
-                    row.loc['additional_pmt'],
-                    row.loc['opening_principal'] +
-                    row.loc['opening_accrued_interest'] +
-                    row.loc['current_period_interest'],
-                )
-                row.loc['closing_accrued_interest'] = \
-                    max(
-                        0,
-                        row.loc['opening_accrued_interest'] +
-                        row.loc['current_period_interest'] -
-                        row.loc['total_pmt'],
-                    )
-                cl_ai = row.loc['closing_accrued_interest']
-                row.loc['closing_principal'] = \
-                    max(
-                        0,
+    def _merge_addl_pmt(self, addl_pmt_update: dict) -> dict:
+        keys = set(list(self.addl_pmts.keys()) + list(addl_pmt_update.keys()))
+        return {
+            k: self.addl_pmts.get(k, 0.0) + addl_pmt_update.get(k, 0.0)
+            for k in keys
+        }
+
+    def _get_mod_cfs(self) -> pd.dataFrame:
+        if self.fully_prepaid == 1:
+            return self.updated_cfs
+        else:
+            df = self.updated_cfs
+            if self.addl_pmts:
+                cl_p = self.loan_amt
+                cl_ai = 0  # accrued interest for 1st period
+                df['additional_pmt'] = pd.Series(
+                    {k-1: v for k, v in self.addl_pmts.items()},
+                    index=df.index,
+                ).fillna(0)
+                for idx, row in df.iterrows():
+                    row.loc['opening_principal'] = cl_p
+                    row.loc['opening_accrued_interest'] = cl_ai
+                    row.loc['current_period_interest'] = \
+                        row.loc['opening_principal'] * \
+                        self._period_interest_rate
+                    row.loc['total_pmt'] = min(
+                        row.loc['interest_pmt'] +
+                        row.loc['principal_pmt'] +
+                        row.loc['additional_pmt'],
                         row.loc['opening_principal'] +
                         row.loc['opening_accrued_interest'] +
-                        row.loc['current_period_interest'] -
-                        row.loc['total_pmt'],
+                        row.loc['current_period_interest'],
                     )
-                cl_p = row.loc['closing_principal']
-                df.loc[idx, cols] = row.loc[cols]
-        else:
-            df['additional_pmt'] = 0.0
-        return df[[
-            col for col in cols if col not in [
-                'interest_pmt', 'principal_pmt', ]
-        ]]
+                    row.loc['closing_accrued_interest'] = \
+                        max(
+                            0,
+                            row.loc['opening_accrued_interest'] +
+                            row.loc['current_period_interest'] -
+                            row.loc['total_pmt'],
+                        )
+                    cl_ai = row.loc['closing_accrued_interest']
+                    row.loc['closing_principal'] = \
+                        max(
+                            0,
+                            row.loc['opening_principal'] +
+                            row.loc['opening_accrued_interest'] +
+                            row.loc['current_period_interest'] -
+                            row.loc['total_pmt'],
+                        )
+                    cl_p = row.loc['closing_principal']
+                    df.loc[idx, self.cols] = row.loc[self.cols]
+            self.updated_cfs = df
+            return self.updated_cfs
 
     @property
     def mod_wal(self) -> float:
-        return self._wal(self.get_mod_cfs())
+        return self._wal(self.updated_cfs)
 
     @property
     def mod_apr(self) -> float:
         return self.interest_rate + (self.fees_pct / (self.mod_wal / 12))
 
     def _maturity(self) -> np.int64:
-        _cfs = self.get_mod_cfs()
+        _cfs = self.updated_cfs
         # numpy_financial precision issue
         return _cfs[_cfs.closing_principal <= 1e-9].period.min()
 
@@ -211,3 +222,33 @@ class Loan:
     @property
     def mod_maturity_period(self):
         return self._maturity()
+
+    def prepay_fully(self, period: int) -> pd.DataFrame:
+        if self.fully_prepaid == 1:
+            raise PrepaymentException('Loan is already pre-paid fully')
+        else:
+            df = self.updated_cfs
+            prepay_amt = df.loc[period-1, 'closing_principal']
+            self.addl_pmts = self._merge_addl_pmt({period: prepay_amt})
+            self.updated_cfs = self._get_mod_cfs()
+            self.fully_prepaid = 1
+            return self.updated_cfs
+
+    def update_addl_pmts(self, addl_pmt_update: dict) -> pd.DataFrame:
+        if self.fully_prepaid == 1:
+            raise PrepaymentException(
+                'Loan already fully pre-paid. Cannot '
+                'make additional payments',
+            )
+        elif self.addl_pmts:
+            self.addl_pmts = self._merge_addl_pmt(addl_pmt_update)
+            self.updated_cfs = self._get_mod_cfs()
+            return self.updated_cfs
+        else:
+            self.addl_pmts = addl_pmt_update
+            self.updated_cfs = self._get_mod_cfs()
+            return self.updated_cfs
+
+    def reset_addl_pmts(self) -> None:
+        self.addl_pmts = {}
+        self.updated_cfs = self._get_mod_cfs()

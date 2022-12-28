@@ -49,7 +49,7 @@ def test_cf_mechanics(test_input: tuple, expected: tuple) -> None:
         loan_dt='2022-12-12',
         freq=frq, fees_pct=fee, addl_pmts=adp,
     )
-    df = l1.get_mod_cfs()
+    df = l1.updated_cfs
     assert df.iloc[:, 1:].all().all() >= 0  # all values in the cashflows
 
     # dataframe,
