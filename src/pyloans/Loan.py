@@ -69,9 +69,9 @@ class Loan:
 
     >**Examples:**
     ```python
-    import pyloans as pyl
+    from pyloans import Loan as pyl
 
-    l1 = pyl.Loan.Loan(
+    l1 = pyl.Loan(
         loan_amt=20000,
         interest_rate=0.1099,
         term_in_months=60,
@@ -88,12 +88,12 @@ class Loan:
     # Get the original schedule of cashflows without considering additional
     # payments, if any:
 
-    Loan_obj.original_cfs
+    l1.original_cfs
 
     # Get the modified schedule of cashflows considering addition payments,
     # if any:
 
-    Loan_obj.updated_cfs
+    l1.updated_cfs
     ```
         """
 
@@ -157,10 +157,10 @@ class Loan:
 
         === "Usage"
             ```python
-            Loan_obj.get_org_cfs()
+            l1.get_org_cfs()
 
             # Alternatively
-            Loan_obj.original_cfs
+            l1.original_cfs
             ```
 
         === "Output"
@@ -223,7 +223,7 @@ class Loan:
         original schedule.
         >**Usage**:
             ```python
-            Loan_obj.org_wal
+            l1.org_wal
             ```
         """
         return self._wal(self.get_org_cfs())
@@ -237,7 +237,7 @@ class Loan:
         including fees) divided by the WAL of the loan.
         >**Usage**:
             ```python
-            Loan_obj.org_apr
+            l1.org_apr
             ```
         """
         return self.interest_rate + (self.fees_pct / (self.org_wal / 12))
@@ -306,7 +306,7 @@ class Loan:
         object.
         > **Usage:**
             ```python
-            Loan_obj.mod_wal
+            l1.mod_wal
             ```
         """
         return self._wal(self.updated_cfs)
@@ -319,7 +319,7 @@ class Loan:
         object.
         > **Usage:**
             ```python
-            Loan_obj.mod_apr
+            l1.mod_apr
             ```
         """
         return self.interest_rate + (self.fees_pct / (self.mod_wal / 12))
@@ -337,7 +337,7 @@ class Loan:
         payment frequency.
         > **Usage:**
             ```python
-            Loan_obj.org_maturity_period()
+            l1.org_maturity_period()
             ```
         """
         return self._periods
@@ -349,7 +349,7 @@ class Loan:
         if any.
         > **Usage:**
             ```python
-            Loan_obj.org_maturity_period()
+            l1.org_maturity_period()
             ```
         """
         return self._maturity()
@@ -365,7 +365,7 @@ class Loan:
         flag is also set to 1.
         > **Usage:**
             ```python
-            Loan_obj.org_maturity_period(6)
+            l1.org_maturity_period(6)
             ```
         """
         if self.fully_prepaid == 1:
@@ -387,7 +387,7 @@ class Loan:
         include the additional payment passed to the method.
         > **Usage:**
             ```python
-            Loan_obj.update_addl_pmts({7: 700})
+            l1.update_addl_pmts({7: 700})
             ```
         """
         if self.fully_prepaid == 1:
@@ -411,7 +411,7 @@ class Loan:
         a way to reset the `addl_pmts` attribute in case of any errors.
         > **Usage:**
             ```python
-            Loan_obj.reset_addl_pmts()
+            l1.reset_addl_pmts()
             ```
         """
         self.addl_pmts = {}

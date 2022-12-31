@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from pyloans import Loan as pylL
+from pyloans import Loan as pyl
 
 
 @pytest.mark.parametrize(
@@ -44,7 +44,7 @@ def test_cf_mechanics(test_input: tuple, expected: tuple) -> None:
     """Test to check the cah-flows generated including, WAL and APR."""
     irt, trm, frq, fee, adp = test_input
     owal, omat, mowal, momat, oapr, moapr = expected
-    l1 = pylL.Loan(
+    l1 = pyl.Loan(
         loan_amt=20000, interest_rate=irt, term_in_months=trm,
         loan_dt='2022-12-12',
         freq=frq, fees_pct=fee, addl_pmts=adp,

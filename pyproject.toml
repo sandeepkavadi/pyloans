@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyloans"
-version = "0.1.0"
+version = "0.1.0.post010"
 description = "A package to generate, analyze and work with simple installment loans."
 authors = ["Sandeep <sandeep.kavadi.uc@gmail.com>"]
 license = "MIT"
