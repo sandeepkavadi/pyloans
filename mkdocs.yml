@@ -36,7 +36,10 @@ theme:
     logo: logo
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          path = [.]
 
 nav:
   - Home: index.md
