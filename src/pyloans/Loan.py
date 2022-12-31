@@ -18,22 +18,83 @@ class Loan:
 
     To be initialized with the following parameters:
 
-    1. `loan_amount:float` - The Original loan amount (principal) disbursed
+    1. `loan_amount:float` - [Required] The original loan amount (principal)
+    disbursed
     on the loan date.
-    2. `int_rate:float` - original rate of interest applicable on the
-    principal outstanding.
-    3. `fees:float` - Origination fees charged at the time of booking,
-    expressed as a % of original loan amount.
-    4. `term:float` - The original term of the loan per schedule.
-    5. `segment:str` - The approx risk category of the loan. Broadly mapped
-    to six FICO_score groups. Configurable via config.yaml for categories'
-    6. `channel:str` - Indicator variable to identify if the loan was booked
-    through a free channel or a paid channel.
-    7. `loan_dt:str` - Date of loan disbursement.
-    8. `freq:str` - Frequency of repayment. Monthly, Quarterly etc. Valid
-    values can be accessed via the class variable loan.valid_pmt_freq
+    2. `int_rate:float` - [Required] original rate of interest applicable on
+    the principal outstanding.
+    3. `term_in_months:float` - [Required] The original term of the loan per
+    schedule.
+    4. `loan_dt:str` - Date of loan disbursement.
+    5. `freq:str` - [Optional; default value:'M'] Frequency of repayment.
+    Monthly, Quarterly etc. Valid values can be accessed via the class variable
+    `Loan.valid_pmt_freq`.
 
+        >    Valid inputs to the frequency variable include the below:
 
+            - 'W': 'Weekly payments'
+            - '2W': 'Fortnightly payments'
+            - 'M': 'Monthly payments'
+            - 'BM': 'Bi-monthly payments'
+            - 'Q': 'Quarterly payments'
+            - 'H': 'Semi-annual payments'
+            - 'Y': 'Annual payments'
+
+    6. `fees:float` - [Optional; default value: 0.0] Origination fees charged
+    at the time of booking, expressed as a % of original loan amount.
+    7. `addl_pmts: dict` - [Optional; default value: None] A dictionary
+    containing all additional payments made over and above the scheduled
+    payments for the loan obligation.
+    8. `segment:str` - [Optional; default value: 'c'] The approx risk
+    category of the loan. Broadly mapped to six FICO_score groups.
+    Configurable via config.yaml for categories'
+    9. `channel:str` - [Optional; default value: 'free'] Indicator variable to
+    identify if the loan was booked through a free channel or a paid channel.
+
+    Apart from the initialization parameters mentioned above, the loan
+    object also has the following attributes:
+
+    1. `pmt: float` - Based on the initial parameters of the loan,
+    the attribute reflects the original equated installment amount.
+    2.  `original_cfs: pd.DataFrame` - A dataframe with the original
+    schedule of cashflows based on the loan parameters is returned. This
+    does not include the additional payments made.
+    3. `updated_cfs: pd.DataFrame` - A dataframe with the modified
+    schedule of cashflows based on the loan parameters is returned. This
+    considers the additional payments made.
+    4. `fully_prepaid: int` - A flag like parameter to indicate of the loan
+    was fully pre-paid. In case the loan in fully pre-paid, no additional
+    payments can be specified and hence there cannot be further
+    modifications to the cashflows.
+
+    >**Examples:**
+    ```python
+    import pyloans as pyl
+
+    l1 = pyl.Loan.Loan(
+        loan_amt=20000,
+        interest_rate=0.1099,
+        term_in_months=60,
+        loan_dt="2022-12-12",
+        freq="M",
+        addl_pmts={
+            3: 200,
+            4: 300,
+            5: 400,
+            6: 500,
+        },
+    )
+
+    # Get the original schedule of cashflows without considering additional
+    # payments, if any:
+
+    Loan_obj.original_cfs
+
+    # Get the modified schedule of cashflows considering addition payments,
+    # if any:
+
+    Loan_obj.updated_cfs
+    ```
         """
 
     valid_pmt_freq = {
@@ -85,14 +146,34 @@ class Loan:
             self._periods, self.loan_amt,
         )
         self.fully_prepaid = 0
-        self.updated_cfs = self.original_cfs = self.get_org_cfs()
+        self.original_cfs = self.get_org_cfs()
+        self.updated_cfs = self.get_org_cfs()
         self.updated_cfs = self._get_mod_cfs()
 
     def get_org_cfs(self) -> pd.DataFrame:
         """Method to get the original scheduled of cashflows for a given loan.
         For monthly frequency (most common), it assumes that the dues date are
         on the same day of the month every month.
-        Usage: loan.get_schedule()"""
+
+        === "Usage"
+            ```python
+            Loan_obj.get_org_cfs()
+
+            # Alternatively
+            Loan_obj.original_cfs
+            ```
+
+        === "Output"
+            | dates      |period |opening_principal |....|  closing_principal |
+            |:-----------|------:|-----------------:|---:|-------------------:|
+            | 2023-01-12 |     1 |          20000   |....|            19802.6 |
+            | 2023-02-12 |     2 |          19802.6 |....|            19603.4 |
+            | 2023-03-12 |     3 |          19603.4 |....|            19202.3 |
+            | 2023-04-12 |     4 |          19202.3 |....|            18697.6 |
+            | 2023-05-12 |     5 |          18697.6 |....|            18088.3 |
+            .....
+
+            """
         df = pd.DataFrame()
         df['dates'] = pd.Series(
             pd.date_range(
@@ -138,8 +219,13 @@ class Loan:
         a given cashflow schedule.
         The [WAL](https://en.wikipedia.org/wiki/Weighted-average_life) of the
         loan can be defined as the average number of months it takes for the
-        principal of the loan
-        to be repaid, if the borrower repays by the original schedule."""
+        principal of the loan to be repaid, if the borrower repays by the
+        original schedule.
+        >**Usage**:
+            ```python
+            Loan_obj.org_wal
+            ```
+        """
         return self._wal(self.get_org_cfs())
 
     @property
@@ -147,9 +233,13 @@ class Loan:
         """Returns the Annual percentage rate (APR) of the loan based on the
         original cashflow schedule.
         The [APR](https://en.wikipedia.org/wiki/Annual_percentage_rate) of the
-        loan can be defined as the
-        total financial cost of the loan (including fees) divided by the WAL of
-        the loan."""
+        loan can be defined as the total financial cost of the loan (
+        including fees) divided by the WAL of the loan.
+        >**Usage**:
+            ```python
+            Loan_obj.org_apr
+            ```
+        """
         return self.interest_rate + (self.fees_pct / (self.org_wal / 12))
 
     def _merge_addl_pmt(self, addl_pmt_update: dict) -> dict:
@@ -203,15 +293,35 @@ class Loan:
                         )
                     cl_p = row.loc['closing_principal']
                     df.loc[idx, self.cols] = row.loc[self.cols]
+            else:
+                df = self.get_org_cfs()
             self.updated_cfs = df
             return self.updated_cfs
 
     @property
     def mod_wal(self) -> float:
+        """
+        Returns the WAL of the loan object based on the additional payments
+        provided. The WAL is based on the `updated_cfs` attribute of the loan
+        object.
+        > **Usage:**
+            ```python
+            Loan_obj.mod_wal
+            ```
+        """
         return self._wal(self.updated_cfs)
 
     @property
     def mod_apr(self) -> float:
+        """
+        Returns the APR of the loan object based on the additional payments
+        provided. The APR is based on the `updated_cfs` attribute of the loan
+        object.
+        > **Usage:**
+            ```python
+            Loan_obj.mod_apr
+            ```
+        """
         return self.interest_rate + (self.fees_pct / (self.mod_wal / 12))
 
     def _maturity(self) -> np.int64:
@@ -221,13 +331,43 @@ class Loan:
 
     @property
     def org_maturity_period(self):
+        """
+        Returns the original maturity in periods, which is same as the
+        term_in_months, converted to the corresponding periods based on the
+        payment frequency.
+        > **Usage:**
+            ```python
+            Loan_obj.org_maturity_period()
+            ```
+        """
         return self._periods
 
     @property
     def mod_maturity_period(self):
+        """
+        Returns the modified maturity after considering additional payments,
+        if any.
+        > **Usage:**
+            ```python
+            Loan_obj.org_maturity_period()
+            ```
+        """
         return self._maturity()
 
     def prepay_fully(self, period: int) -> pd.DataFrame:
+        """
+        The method checks the status of the loan if it is already fully
+        pre-paid. If the loan is already fully pre-paid, we raise an
+        exception notifying the same.
+        Else, the outstanding principal amount is considered as the
+        additional payment amount and the closing balance of the loan is
+        zero-ed out in the period specified as the input. The `fully_prepaid`
+        flag is also set to 1.
+        > **Usage:**
+            ```python
+            Loan_obj.org_maturity_period(6)
+            ```
+        """
         if self.fully_prepaid == 1:
             raise PrepaymentException('Loan is already pre-paid fully')
         else:
@@ -239,6 +379,17 @@ class Loan:
             return self.updated_cfs
 
     def update_addl_pmts(self, addl_pmt_update: dict) -> pd.DataFrame:
+        """
+        The method checks the status of the loan if it is already fully
+        pre-paid. If the loan is already fully pre-paid, we raise an
+        exception notifying the same.
+        Else, the `addl_pmts` attribute of the loan object is merged to
+        include the additional payment passed to the method.
+        > **Usage:**
+            ```python
+            Loan_obj.update_addl_pmts({7: 700})
+            ```
+        """
         if self.fully_prepaid == 1:
             raise PrepaymentException(
                 'Loan already fully pre-paid. Cannot '
@@ -254,5 +405,15 @@ class Loan:
             return self.updated_cfs
 
     def reset_addl_pmts(self) -> None:
+        """
+        Since the `update_addl_pmts` method merges the input with the
+        existing attribute `addl_pmts` of the loan object. The method provides
+        a way to reset the `addl_pmts` attribute in case of any errors.
+        > **Usage:**
+            ```python
+            Loan_obj.reset_addl_pmts()
+            ```
+        """
         self.addl_pmts = {}
+        self.fully_prepaid = 0
         self.updated_cfs = self._get_mod_cfs()

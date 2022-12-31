@@ -17,7 +17,7 @@ From a borrower's perspective the package offers the following functionality:
 3. Updated date of maturity based on additional payments made
 4. Annual Percentage Rate (APR)
 
-[comment]: #<>(5. Compare offers and consolidate multiple financial
+[comment]: <>(5. Compare offers and consolidate multiple financial
    obligations)
 
 From a lenders perspective the package offers the following functionality:

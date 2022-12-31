@@ -65,7 +65,7 @@ l1 = pyl.Loan.Loan(
 ```
 The keys indicate the `period` when the payment was made. The period of the
 loan depends on the frequency of repayment and is not necessarily the month
-in which the payment was made. n the above example we record additional
+in which the payment was made. In the above example we record additional
 payments of 200, 300, 400 and 500 made in the period 3, 4, 5 and 6
 respectively.
 
@@ -89,16 +89,18 @@ To get the apr, the all in annualized financial cost, for the loan
 obligation we call on the property:
 ```python
 l1.org_apr  # to get the original apr
+
 l1.mod_apr  # to get the latest apr post additional payments
 ```
 
-# Get the Weighted Average Life (WAL)
+## Get the Weighted Average Life (WAL)
 
 To get the WAL, the average number of months to get back the principal
 amount lent to the customer, we call the property:
 
 ```python
 l1.org_wal  # original wal based on the original schedule of cashflows
+
 l1.mod_wal  # modified wal considering the additional payments
 ```
 
