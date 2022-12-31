@@ -13,22 +13,27 @@ class PrepaymentException(Exception):
 
 
 class Loan:
-    """Loan class to create instances of installment loans.
-     To be initialized with the following parameters:
-        1. loan_amount:float - The Original loan amount (principal) disbursed
-        on the loan date.
-        2. int_rate:float - original rate of interest applicable on the
-        principal outstanding.
-        3. fees:float - Origination fees charged at the time of booking,
-        expressed as a % of original loan amount.
-        4. term:float - The original term of the loan per schedule.
-        5. segment:str - The approx risk category of the loan. Broadly mapped
-        to six FICO_score groups. Configurable via config.yaml for categories'
-        6. channel:str - Indicator variable to identify if the loan was booked
-        through a free channel or a paid channel.
-        7. loan_dt:str - Date of loan disbursement.
-        8. freq:str - Frequency of repayment. Monthly, Quarterly etc. Valid
-        values can be accessed via the class variable loan.valid_pmt_freq
+    """
+    ## Loan class to create instances of installment loans.
+
+    To be initialized with the following parameters:
+
+    1. `loan_amount:float` - The Original loan amount (principal) disbursed
+    on the loan date.
+    2. `int_rate:float` - original rate of interest applicable on the
+    principal outstanding.
+    3. `fees:float` - Origination fees charged at the time of booking,
+    expressed as a % of original loan amount.
+    4. `term:float` - The original term of the loan per schedule.
+    5. `segment:str` - The approx risk category of the loan. Broadly mapped
+    to six FICO_score groups. Configurable via config.yaml for categories'
+    6. `channel:str` - Indicator variable to identify if the loan was booked
+    through a free channel or a paid channel.
+    7. `loan_dt:str` - Date of loan disbursement.
+    8. `freq:str` - Frequency of repayment. Monthly, Quarterly etc. Valid
+    values can be accessed via the class variable loan.valid_pmt_freq
+
+
         """
 
     valid_pmt_freq = {
@@ -80,8 +85,7 @@ class Loan:
             self._periods, self.loan_amt,
         )
         self.fully_prepaid = 0
-        self.original_cfs = self.get_org_cfs()
-        self.updated_cfs = self.original_cfs
+        self.updated_cfs = self.original_cfs = self.get_org_cfs()
         self.updated_cfs = self._get_mod_cfs()
 
     def get_org_cfs(self) -> pd.DataFrame:
@@ -124,18 +128,18 @@ class Loan:
         return df
 
     def _wal(self, _df: pd.DataFrame) -> float:
-        """Returns the weighted average life of the loan (in months) based on
-        a given cashflow schedule.
-        The [WAL](https://en.wikipedia.org/wiki/Weighted-average_life) of the
-        loan can be defined as the average number of months it takes for the
-        principal of the loan
-        to be repaid, if the borrower repays by the original schedule."""
         return ((_df['opening_principal'] - _df['closing_principal']) *
                 _df['period']).sum() * \
             self.period_to_months[self.freq] / self.loan_amt
 
     @property
     def org_wal(self) -> float:
+        """Returns the weighted average life of the loan (in months) based on
+        a given cashflow schedule.
+        The [WAL](https://en.wikipedia.org/wiki/Weighted-average_life) of the
+        loan can be defined as the average number of months it takes for the
+        principal of the loan
+        to be repaid, if the borrower repays by the original schedule."""
         return self._wal(self.get_org_cfs())
 
     @property

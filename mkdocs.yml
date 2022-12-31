@@ -9,4 +9,6 @@ plugins:
   - mkdocstrings
 
 nav:
-  - Loan Class: index.md
+  - Home : index.md
+  - Quickstart Guide: quickstart.md
+  - Loan (class): loan.md
