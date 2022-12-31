@@ -3,7 +3,7 @@
 ## Importing the `pyloans` package
 
 ```python
-import pyloans as pyl
+from pyloans import Loan as pyl
 ```
 
 ## Creating a loan instance
@@ -21,7 +21,7 @@ following parameters:
 5. Frequency of repayment (`freq`): **Monthly**
 
 ```python
-l1 = pyl.Loan.Loan(
+l1 = pyl.Loan(
     loan_amt=20000,
     interest_rate=0.1099,
     term_in_months=60,
@@ -49,7 +49,7 @@ First, the additional payments can be provided while instantiating the loan
 object using the `addl_pmts` attribute as below:
 
 ```python
-l1 = pyl.Loan.Loan(
+l1 = pyl.Loan(
     loan_amt=20000,
     interest_rate=0.1099,
     term_in_months=60,
