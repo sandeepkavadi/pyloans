@@ -330,7 +330,7 @@ class Loan:
         return _cfs[_cfs.closing_principal <= 1e-9].period.min()
 
     @property
-    def org_maturity_period(self):
+    def org_maturity_period(self) -> float:
         """
         Returns the original maturity in periods, which is same as the
         term_in_months, converted to the corresponding periods based on the
@@ -343,7 +343,7 @@ class Loan:
         return self._periods
 
     @property
-    def mod_maturity_period(self):
+    def mod_maturity_period(self) -> float:
         """
         Returns the modified maturity after considering additional payments,
         if any.
