@@ -32,5 +32,5 @@ lender's profitability)
 [comment]: <> (5. Systematic way to understand portfolio profitability based on
    historical distributions of prepayments, charge-offs and loan structures.)
 
-Please see [Quickstart guide] for basic functionality of the
+Please see [Quickstart guide](https://sandeepkavadi.github.io/pyloans/quickstart/) for basic functionality of the
 package.
