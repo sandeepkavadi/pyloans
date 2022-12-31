@@ -39,7 +39,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          path = [.]
+          path: [.]
 
 nav:
   - Home: index.md
