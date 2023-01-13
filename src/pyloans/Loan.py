@@ -120,6 +120,65 @@ class Loan:
         'additional_pmt', 'total_pmt', 'closing_principal',
     ]
 
+    valid_inputs = {
+        'loan_amt': {
+            'type': (float, int), 'min': 0.0, 'max': 10e9,
+            'vals': (), 'msg': """typical range is 0 - 100,000 for
+                     personal loans""",
+        },
+        'interest_rate': {
+            'type': (float, int), 'min': 0.0, 'max': 1.0,
+            'vals': (), 'msg': """suggested range: 0.0% -
+                          24.99% (typically < 100%)""",
+        },
+        'term_in_months': {
+            'type': (float, int), 'min': 0.0, 'max': 1200,
+            'vals': (), 'msg': """typically  <= 80 for personal
+                           loans, most common terms are multiples of 6 months
+                           """,
+        },
+        'loan_dt': {
+            'type': (dt.datetime, dt.date), 'min': None, 'max': None,
+            'vals': (), 'msg': """Any valid dates strings in
+                    'YYY-mm-dd' format, recommended to be after 1970-01-01
+                    to avoid any unexpected errors.""",
+        },
+        'freq': {
+            'type': str, 'min': None, 'max': None,
+            'vals': ('W', '2W', 'M', 'BM', 'Q', 'H', 'Y'),
+            'msg': """Please use `Loan.valid_pmt_freq` to check for
+                 accepted payment frequencies.""",
+        },
+        'fees_pct': {
+            'type': (float, int), 'min': 0.0, 'max': 1.0,
+            'vals': (),
+            'msg': """range: 0% - 100% (typically < 15%)""",
+        },
+        'addl_pmts': {
+            'type': (dict, None), 'min': None, 'max': None,
+            'vals': (),
+            'msg': """No additional payments once the loan is
+                      fully pre-paid. Please also ensure that the amount
+                      paid in a particular period is less than or equal to
+                      the closing principal for the current period after
+                      considering all additional payments.
+                      """,
+        },
+        'segment': {
+            'type': str, 'min': None, 'max': None,
+            'vals': (),
+            'msg': """Please check config file for defined segments.
+                      """,
+        },
+        'channel': {
+            'type': str, 'min': None, 'max': None,
+            'vals': ('free', 'paid'),
+            'msg': """Please check config file for defined channels.
+                        By default we have two specified channels.
+                      """,
+        },
+    }
+
     def __init__(
             self, loan_amt: float, interest_rate: float, term_in_months: float,
             loan_dt: str, freq: str = 'M', fees_pct: float = 0.0,
@@ -135,6 +194,7 @@ class Loan:
         self.addl_pmts = addl_pmts if addl_pmts else {}
         self.segment = segment
         self.channel = channel
+        self._check_inputs()    # check all inputs provided by user
         self._offset = self.freq_offset[self.freq]
         self._periods = math.ceil(
             self.term_in_months / self.period_to_months[self.freq],
@@ -149,6 +209,65 @@ class Loan:
         self.original_cfs = self.get_org_cfs()
         self.updated_cfs = self.get_org_cfs()
         self.updated_cfs = self._get_mod_cfs()
+
+    def _check_inputs(self):
+        """
+        Method to check the validity of the inputs with helpful
+        prompts around expected types and ranges for the inputs.
+        Specifically the function check for the inputs types fo the
+        following instance attributes:
+            1. loan_amt: float, range: 0 - 10^9 (typically 0 - 100,000 for
+                personal loans)
+            2. interest_rate: float, suggested range: 0.0% - 24.99% (
+                typically < 100%)
+            3. term_in_months: float, range: typically positive integer < 80
+                for personal loans. bonds or other fixed income securities
+                may have longer terms up to 360
+            4. loan_dt: str, range: Any valid dates strings, recommended to
+                be after 1970-01-01 to avoid any unexpected errors
+            5. freq: str (default = 'M'), range: {
+                    'W': 'Weekly payments', '2W': 'Fortnightly payments',
+                    'M': 'Monthly payments', 'BM': 'Bi-monthly payments',
+                    'Q': 'Quarterly payments', 'H': 'Semi-annual payments',
+                    'Y': 'Annual payments',
+                    }
+            6. fees_pct: float = 0.0, range: 0% - 100% (typically < 15%)
+            7. addl_pmts: dict | None (default = None), individual values
+                for payments in a particular month cannot be more than the
+                principal outstanding amount
+            8. segment: str (default = 'c'), range: please check config file
+                for number of acceptable segments defined by the user
+            9. channel: str (default = 'free'), please check config file,
+            commonly has only two values by default ['free', 'paid']
+        """
+        inputs = Loan.valid_inputs
+        for atr in inputs.keys():
+            user_val = getattr(self, atr)
+            try:
+                if not isinstance(user_val, inputs[atr]['type']):
+                    raise TypeError
+                elif inputs[atr]['min'] is not None:
+                    if (user_val < inputs[atr]['min']) | (
+                            user_val > inputs[atr]['max']
+                    ):
+                        raise ValueError
+                elif inputs[atr]['vals']:
+                    if user_val not in inputs[atr]['vals']:
+                        raise ValueError
+                    else:
+                        pass
+            except TypeError:
+                raise TypeError(
+                    f'Expected type for {atr} is'
+                    f' {inputs[atr]["type"]} but provided input '
+                    f'is {type(atr)}.'
+                    f' {inputs[atr]["msg"]}',
+                )
+            except ValueError:
+                raise ValueError(
+                    f'Provided value for {atr} is out of range.'
+                    f' {inputs[atr]["msg"]}',
+                )
 
     def get_org_cfs(self) -> pd.DataFrame:
         """Method to get the original scheduled of cashflows for a given loan.
