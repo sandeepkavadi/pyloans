@@ -15,5 +15,4 @@ jobs:
         with:
           python-version: 3.10.6
       - run: pip install pytest
-      - run: pip install -e pyloans
       - run: pytest

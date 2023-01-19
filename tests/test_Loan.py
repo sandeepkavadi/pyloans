@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from pyloans import Loan as pyl
+
+from src.pyloans import Loan as pyl
 
 
 @pytest.mark.parametrize(
