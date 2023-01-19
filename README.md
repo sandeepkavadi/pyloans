@@ -1,5 +1,5 @@
-![tests](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
-![docs build](https://github.com/github/docs/actions/workflows/docs.yml/badge.svg)
+![tests](https://github.com/sandeepkavadi/pyloans/actions/workflows/test.yml/badge.svg)
+![docs build](https://github.com/sandeepkavadi/pyloans/actions/workflows/docs.yml/badge.svg)
 
 # `pyloans`: A simulator for installment based financial obligations
 
