@@ -41,7 +41,7 @@ from pyloans import Loan as pyl
     ],
 )
 def test_cf_mechanics(test_input: tuple, expected: tuple) -> None:
-    """Test to check the cah-flows generated including, WAL and APR."""
+    """Test to check the cash-flows generated including, WAL and APR."""
     irt, trm, frq, fee, adp = test_input
     owal, omat, mowal, momat, oapr, moapr = expected
     l1 = pyl.Loan(
@@ -61,3 +61,121 @@ def test_cf_mechanics(test_input: tuple, expected: tuple) -> None:
     assert round(l1.mod_wal, 2) == mowal
     assert round(l1.mod_apr, 4) == moapr
     assert round(l1.mod_maturity_period, 2) == momat
+
+
+@pytest.mark.parametrize(
+    'test_input, expected',
+    [
+        (
+            ('20000', 0.0599, 36, '2022-10-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, '0.0599', 36, '2022-10-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 0.0599, [36], '2022-10-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 0.0599, '36', '2022-10-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 0.0599, 36, '2022-10-10', 'M', 0, '{}'),
+            'NA',
+        ), (
+            ('20000', '0.0599', '36', '2022-10-10', 'M', '0', '{3: 0}'),
+            'NA',
+        ),
+    ],
+)
+def test_invalid_input_type(test_input: tuple, expected: tuple) -> None:
+    """Test to check the inputs provided by the user conform to the
+    mentioned type specifications."""
+    amt, irt, trm, ln_dt, frq, fee, adp = test_input
+    with pytest.raises(TypeError):
+        l1 = pyl.Loan(      # noqa F841
+            loan_amt=amt, interest_rate=irt, term_in_months=trm,
+            loan_dt=ln_dt,
+            freq=frq, fees_pct=fee, addl_pmts=adp,
+        )
+
+
+@pytest.mark.parametrize(
+    'test_input, expected',
+    [
+        (
+            (20e9, 0.0599, 36, '2022-10-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 1.0599, 36, '2022-10-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 2.0599, 36, '2022-13-10', 'M', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 0.0599, 36, '2022-10-10', 'MM', 0, {3: 0}),
+            'NA',
+        ), (
+            (20000, 0.0599, 36, '2022-10-10', 'Month', 5, {3: 0}),
+            'NA',
+        ), (
+            (20000, 0.0599, 36, '2022-10-10', 'M', 1.01, {36: 500}),
+            'NA',
+        ),
+    ],
+)
+def test_invalid_input_value(test_input: tuple, expected: tuple) -> None:
+    """Test to check the inputs provided by the user conform to the
+    mentioned value range specifications."""
+    amt, irt, trm, ln_dt, frq, fee, adp = test_input
+    with pytest.raises(ValueError):
+        l1 = pyl.Loan(      # noqa F841
+            loan_amt=amt, interest_rate=irt, term_in_months=trm,
+            loan_dt=ln_dt,
+            freq=frq, fees_pct=fee, addl_pmts=adp,
+        )
+
+
+def test_full_prepayment() -> None:
+    """Test to check the fully_prepay method"""
+    amt, irt, trm, ln_dt, frq, fee, adp = (
+        20000, 0.0599, 60, '2022-12-12',
+        'W', 0.1, {3: 500, 4: 400, 6: 200},
+    )
+    # Instantiate a test loan object
+    l1 = pyl.Loan(
+            loan_amt=amt, interest_rate=irt, term_in_months=trm,
+            loan_dt=ln_dt,
+            freq=frq, fees_pct=fee, addl_pmts=adp,
+    )
+    l1.prepay_fully(10)
+    assert l1.fully_prepaid == 1
+    with pytest.raises(
+        pyl.PrepaymentException,
+        match=r'Loan is already pre-paid fully',
+    ):
+        l1.prepay_fully(10)
+    with pytest.raises(
+        pyl.PrepaymentException,
+        match=r'Loan already fully pre-paid. Cannot make additional payments',
+    ):
+        l1.update_addl_pmts({5: 100})
+
+
+def test_reset_addl_pmts() -> None:
+    """Test to check the reset_addl_pmts method"""
+    amt, irt, trm, ln_dt, frq, fee, adp = (
+        20000, 0.0599, 60, '2022-12-12',
+        'W', 0.1, {3: 500, 4: 400, 6: 200},
+    )
+    # Instantiate a test loan object
+    l1 = pyl.Loan(
+            loan_amt=amt, interest_rate=irt, term_in_months=trm,
+            loan_dt=ln_dt,
+            freq=frq, fees_pct=fee, addl_pmts=adp,
+    )
+    l1.prepay_fully(10)
+    assert l1.fully_prepaid == 1
+    l1.reset_addl_pmts()
+    assert l1.fully_prepaid == 0
+    l1.prepay_fully(10)
+    assert l1.fully_prepaid == 1

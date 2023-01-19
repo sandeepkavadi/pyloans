@@ -233,7 +233,7 @@ class Loan:
                     }
             6. fees_pct: float = 0.0, range: 0% - 100% (typically < 15%)
             7. addl_pmts: dict | None (default = None), individual values
-                for payments in a particular month cannot be more than the
+                for payments in a particular period cannot be more than the
                 principal outstanding amount
             8. segment: str (default = 'c'), range: please check config file
                 for number of acceptable segments defined by the user
