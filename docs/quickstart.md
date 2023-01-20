@@ -13,12 +13,14 @@ loan structures.
 
 The below code provides a quick way to create a loan instance with the
 following parameters:
+<span style="font-size: 0.85em">
 
-1. Loan Amount (`loan_amt`): **$20,000**
-2. Interest rate (`interest_rate`): **10.99%**
-3. Term of the loan in months (`term_in_months`): **60**
-4. Loan start date (`loan_dt`): **12<sup>th</sup> Dec 2022**
-5. Frequency of repayment (`freq`): **Monthly**
+* Loan Amount (`loan_amt`): **$20,000**
+* Interest rate (`interest_rate`): **10.99%**
+* Term of the loan in months (`term_in_months`): **60**
+* Loan start date (`loan_dt`): **12<sup>th</sup> Dec 2022**
+* Frequency of repayment (`freq`): **Monthly**
+</span>
 
 ```python
 l1 = pyl.Loan(
@@ -103,6 +105,5 @@ l1.org_wal  # original wal based on the original schedule of cashflows
 
 l1.mod_wal  # modified wal considering the additional payments
 ```
-
 For all the methods and attributes available for a loan object, please see
 documentation for [Loan (class)](loan.md)

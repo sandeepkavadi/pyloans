@@ -40,7 +40,8 @@ class Loan:
             - 'H': 'Semi-annual payments'
             - 'Y': 'Annual payments'
 
-    6. `fees:float` - [Optional; default value: 0.0] Origination fees charged
+    6. `fees_pct:float` - [Optional; default value: 0.0] Origination fees
+    charged
     at the time of booking, expressed as a % of original loan amount.
     7. `addl_pmts: dict` - [Optional; default value: None] A dictionary
     containing all additional payments made over and above the scheduled
@@ -123,41 +124,41 @@ class Loan:
     valid_inputs = {
         'loan_amt': {
             'type': (float, int), 'min': 0.0, 'max': 10e9,
-            'vals': (), 'msg': """typical range is 0 - 100,000 for
+            'vals': (), 'hint': """typical range is 0 - 100,000 for
                      personal loans""",
         },
         'interest_rate': {
             'type': (float, int), 'min': 0.0, 'max': 1.0,
-            'vals': (), 'msg': """suggested range: 0.0% -
-                          24.99% (typically < 100%)""",
+            'vals': (), 'hint': """suggested range: 0.0% -
+                          24.99% """,
         },
         'term_in_months': {
             'type': (float, int), 'min': 0.0, 'max': 1200,
-            'vals': (), 'msg': """typically  <= 80 for personal
+            'vals': (), 'hint': """typically  <= 80 for personal
                            loans, most common terms are multiples of 6 months
                            """,
         },
         'loan_dt': {
             'type': (dt.datetime, dt.date), 'min': None, 'max': None,
-            'vals': (), 'msg': """Any valid dates strings in
+            'vals': (), 'hint': """Any valid dates strings in
                     'YYY-mm-dd' format, recommended to be after 1970-01-01
                     to avoid any unexpected errors.""",
         },
         'freq': {
             'type': str, 'min': None, 'max': None,
             'vals': ('W', '2W', 'M', 'BM', 'Q', 'H', 'Y'),
-            'msg': """Please use `Loan.valid_pmt_freq` to check for
+            'hint': """Please use `Loan.valid_pmt_freq` to check for
                  accepted payment frequencies.""",
         },
         'fees_pct': {
             'type': (float, int), 'min': 0.0, 'max': 1.0,
             'vals': (),
-            'msg': """range: 0% - 100% (typically < 15%)""",
+            'hint': """range: 0% - 100% (typically < 15%)""",
         },
         'addl_pmts': {
             'type': (dict, None), 'min': None, 'max': None,
             'vals': (),
-            'msg': """No additional payments once the loan is
+            'hint': """No additional payments once the loan is
                       fully pre-paid. Please also ensure that the amount
                       paid in a particular period is less than or equal to
                       the closing principal for the current period after
@@ -167,13 +168,13 @@ class Loan:
         'segment': {
             'type': str, 'min': None, 'max': None,
             'vals': (),
-            'msg': """Please check config file for defined segments.
+            'hint': """Please check config file for defined segments.
                       """,
         },
         'channel': {
             'type': str, 'min': None, 'max': None,
             'vals': ('free', 'paid'),
-            'msg': """Please check config file for defined channels.
+            'hint': """Please check config file for defined channels.
                         By default we have two specified channels.
                       """,
         },
@@ -261,12 +262,12 @@ class Loan:
                     f'Expected type for {atr} is'
                     f' {inputs[atr]["type"]} but provided input '
                     f'is {type(atr)}.'
-                    f' {inputs[atr]["msg"]}',
+                    f' {inputs[atr]["hint"]}',
                 )
             except ValueError:
                 raise ValueError(
                     f'Provided value for {atr} is out of range.'
-                    f' {inputs[atr]["msg"]}',
+                    f' {inputs[atr]["hint"]}',
                 )
 
     def get_org_cfs(self) -> pd.DataFrame:

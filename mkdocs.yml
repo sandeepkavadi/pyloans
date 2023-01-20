@@ -16,30 +16,46 @@ theme:
     - search.share
     - search.suggest
   palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
     - scheme: slate
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+    - scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
   font:
     text: Roboto
     code: Roboto Mono
   favicon: assets/favicon.png
   icon:
     logo: logo
+    repo: fontawesome/brands/git-alt
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/sandeepkavadi
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/user/kvdsandeep/
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/sandeepkavadi/
+
+copyright: Copyright &copy; 2023 Sandeep Kavadi
 
 plugins:
   - mkdocstrings:
       handlers:
         python:
           path: [.]
+  - search:
+      lang: en
+
+repo_url: https://github.com/sandeepkavadi/pyloans
+repo_name: sandeepkavadi/pyloans
 
 nav:
   - Home: index.md
@@ -48,10 +64,24 @@ nav:
 
 # Extras
 markdown_extensions:
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-#          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.superfences
+  - md_in_html
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - tables
+  - pymdownx.emoji:
+#      emoji_index: !!python/name:materialx.emoji.twemoji
+#      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.arithmatex:
+      generic: true
+
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

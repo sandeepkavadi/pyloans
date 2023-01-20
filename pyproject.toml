@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyloans"
-version = "0.1.0.post010"
+version = "0.1.3"
 description = "A package to generate, analyze and work with simple installment loans."
 authors = ["Sandeep <sandeep.kavadi.uc@gmail.com>"]
 license = "MIT"
@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [{include="pyloans", from="src"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 numpy-financial = "^1.0.0"
 pandas = "^1.5.2"
 
