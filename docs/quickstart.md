@@ -114,7 +114,7 @@ obligation we call on the property:
 To get the WAL, the average number of months to get back the principal
 amount lent to the customer, we call the property:
 
-!!! Example "*Example: Get the APR*"
+!!! Example "*Example: Get the WAL*"
 
     ```python
     l1.org_wal  # original wal based on the original schedule of cashflows

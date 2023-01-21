@@ -55,7 +55,7 @@ Additionally, the object also accepts the following **optional** parameters:
     |     `loan_dt`    |           No          |      `#!python str`     | None | None |
     |      `freq`      |   Yes (default: 'M')  |      `#!python str`     | None | None |
     |    `fees_pct`    |   Yes (default: 0.0)  | `#!python (float, int)` |  0.0 |  1.0 |
-    |    `addl_pmts`   |  Yes (default: None)  | `#!python (float, int)` | None | None |
+    |    `addl_pmts`   |  Yes (default: None)  | `#!python (dict, None)` | None | None |
     |     `segment`    |   Yes (default: 'c')  |      `#!python str`     | None | None |
     |     `channel`    | Yes (default: 'free') |      `#!python str`     | None | None |
 
@@ -203,6 +203,13 @@ variables per the original schedule are set as the attributes. The
         interest_rate=0.1099,
         term_in_months=60,
         loan_dt="2022-12-12",
+        freq="M",
+        addl_pmts={
+            3: 200,
+            4: 300,
+            5: 400,
+            6: 500,
+        },
     )
 
     # Re-settign additional payments on the `l1` loan instance defined above.
