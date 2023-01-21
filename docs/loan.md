@@ -193,17 +193,18 @@ all  the additional payments specified can be re-set to zero and the
 variables per the original schedule are set as the attributes. The
 `#!python fully_prepaid: int` attribute is also re-set to zero.
 
-!!! Example "*Example: Updating an existing Loan*"
+!!! Example "*Example: Re-setting additional payments*"
 
     ```python
     # Instantiating a Loan object
 
     l1 = pyl.Loan(
-     loan_amt=20000,
-     interest_rate=0.1099,
-     term_in_months=60,
-     loan_dt="2022-12-12",
+        loan_amt=20000,
+        interest_rate=0.1099,
+        term_in_months=60,
+        loan_dt="2022-12-12",
     )
 
     # Re-settign additional payments on the `l1` loan instance defined above.
     l1.reset_addl_pmts()
+    ```
