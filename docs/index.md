@@ -1,6 +1,6 @@
 # `pyloans`: Analytics for Personal Loans
 
-## Introduction
+### Introduction
 
 `pyloans` is a python based package to simplify, analyze and work with
 installment based loan obligations. The installments are generally a fixed

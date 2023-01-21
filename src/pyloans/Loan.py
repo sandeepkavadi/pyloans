@@ -469,7 +469,7 @@ class Loan:
         if any.
         > **Usage:**
             ```python
-            l1.org_maturity_period()
+            l1.mod_maturity_period()
             ```
         """
         return self._maturity()
@@ -485,7 +485,7 @@ class Loan:
         flag is also set to 1.
         > **Usage:**
             ```python
-            l1.org_maturity_period(6)
+            l1.prepay_fully(6)
             ```
         """
         if self.fully_prepaid == 1:
