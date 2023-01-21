@@ -1,4 +1,4 @@
-# `pyloans`: A simulator for installment based financial obligations
+# `pyloans`: Analytics for Personal Loans
 
 ## Introduction
 

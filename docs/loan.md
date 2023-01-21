@@ -1,135 +1,132 @@
-## Loan class to create instances of installment loans.
+The `Loan` class is the fundamental building block of the pyloans packages. It
+enables us to created instances of installment loans. Once a `Loan` object is
+created, we can run analyze the properties of the loan such as generating a
+Cashflow schedule, compute the Weighted Average Life of the loans etc.
 
-To be initialized with the following **required** parameters:
+Please see below for basic CRUD (no deletion) operations concerning the `Loan`
+class.
 
-??? info inline end ""
-        - type: (float, int)
-        - min: 0.0
-        - max: 10e9
-        - hint: typical range is 0 - 100,000 for personal loans
-`loan_amount`: The original loan amount (principal) disbursed on the loan date.
+### **Instantiation**: Creating a Loan object
 
-??? info "`int_rate`"
-    The original rate of interest applicable on the principal outstanding.
+An instance of the `Loan` class can be created using the following
+**required** parameters:
 
-        - type: (float, int)
-        - min: 0.0
-        - max: 1.0
-        - hint: suggested range: 0.0% - 24.99%
-??? info "`term_in_months`"
-    The original term of the loan per schedule.
-
-        - type: (float, int)
-        - min: 0.0
-        - max: 1200
-        - hint: Typically  <= 80 for personal loans, most common terms are
-          multiples of 6 months
-??? info "`loan_dt`"
-    Date of loan disbursement.
-
-        - type: str
-        - min: None
-        - max: None
-        - hint: Any valid dates strings in 'YYY-mm-dd' format, recommended
-          to be after 1970-01-01 to avoid any unexpected errors.
+1. `#!python loan_amount: float`: The original loan amount (principal)
+   disbursed  on the loan  date. Typical range is 0 - 100,000 for
+   personal loans.
+2. `#!python int_rate: float`: The original rate of interest applicable on the
+   principal outstanding. Suggested range: 0.0% - 24.99%
+3. `#!python term_in_months`: The original term of the loan per schedule. Typically,
+   <= 80 for personal loans, most common terms are multiples of 6 months
+4. `#!python loan_dt: str`: Date of loan disbursement. Any valid dates
+   strings in 'YYYY-mm-dd' format, recommended to be after 1970-01-01 to avoid
+   any unexpected errors.
 
 Additionally, the object also accepts the following **optional** parameters:
-??? info "`freq`"
-    Frequency of repayment.
 
-        - type: str
-        - min: None
-        - max: None
-        - valid input strings: ('W', '2W', 'M', 'BM', 'Q', 'H', 'Y')
-            Valid inputs to the frequency variable
-                - W: Weekly payments
-                - 2W: Fortnightly payments
-                - M: Monthly payments
-                - BM: Bi-monthly payments
-                - Q: Quarterly payments
-                - H: Semi-annual payments
-                - Y: Annual payments
-        - hint: Please use `Loan.valid_pmt_freq` to check for accepted payment
-          frequencies.
-??? info "`fees_pct`"
-    Origination fees charged at the time of booking, expressed as a % of
-    original loan amount.
+1. `#!python freq: str`: Frequency of repayment.
+   Please use `Loan.valid_pmt_freq` to check for accepted payment
+   frequencies.
+2. `#!python fees_pct: float`: Origination fees charged at the time of
+   booking, expressed as a % of original loan amount. Range is 0% - 100%
+   (typically < 15%)
+3. `#!python addl_pmts: dict`: A dictionary containing all additional payments
+   made over and above the scheduled payments for the loan obligation. No
+     additional payments once the loan is fully pre-paid. Please also
+     ensure that the amount paid in a particular period is less than or
+     equal to the closing principal for the current period after
+     considering all additional payments.
+4. `#!python segment: str`: The approx risk category of the loan. Broadly
+   mapped to six FICO_score<br>groups. Configurable via config.yaml for
+   categories.
+5. `#!python channel: str`: Indicator variable to identify if the loan was
+   booked through a free channel or a paid channel. By default, we have two
+   specified channels.
 
-        - type: (float, int)
-        - min: 0.0
-        - max: 1.0
-        - hint: range is 0% - 100% (typically < 15%)
-??? info "`addl_pmts`"
-    A dictionary containing all additional payments made over and above the
-    scheduled payments for the loan obligation.
+??? info "Additional information on parameters"
 
-        - type: (dict, None)
-        - min: None
-        - max: None
-        - hint: No additional payments once the loan is fully pre-paid.
-          Please also ensure that the amount paid in a particular period is
-          less than or equal to the closing principal for the current
-          period after considering all additional payments.
-??? info "`segment`"
-    The approx risk category of the loan. Broadly mapped to six FICO_score
-    groups. Configurable via config.yaml for categories.
+    |     Parameter    |       Optional?       |           Type          |  Min |  Max |
+    |:----------------:|:---------------------:|:-----------------------:|:----:|:----:|
+    |    `loan_amt`    |           No          | `#!python (float, int)` |  0.0 | 10e9 |
+    |    `int_rate`    |           No          | `#!python (float, int)` |  0.0 |  1.0 |
+    | `term_in_months` |           No          | `#!python (float, int)` |  1.0 | 1200 |
+    |     `loan_dt`    |           No          |      `#!python str`     | None | None |
+    |      `freq`      |   Yes (default: 'M')  |      `#!python str`     | None | None |
+    |    `fees_pct`    |   Yes (default: 0.0)  | `#!python (float, int)` |  0.0 |  1.0 |
+    |    `addl_pmts`   |  Yes (default: None)  | `#!python (float, int)` | None | None |
+    |     `segment`    |   Yes (default: 'c')  |      `#!python str`     | None | None |
+    |     `channel`    | Yes (default: 'free') |      `#!python str`     | None | None |
 
-        - type: str
-        - min: None
-        - max: None
-        - hint: Please check config file for defined segments.
-??? info "`channel`"
-    Indicator variable to identify if the loan was booked through a free
-    channel or a paid channel.
+!!! Example "*Example: Instantiating a Loan object*"
 
-        - type: str
-        - min: None
-        - max: None
-        - hint: Please check config file for defined channels.  By default
-          we have two specified channels.
+    ```python
+    from pyloans import Loan as pyl
 
-Once the `Loan` object has been instantiated with the user provided inputs,
-the following calculated attributes would be made available attributes:
+    l1 = pyl.Loan(
+        loan_amt=20000,
+        interest_rate=0.1099,
+        term_in_months=60,
+        loan_dt="2022-12-12",
+        freq="M",
+        addl_pmts={
+            3: 200,
+            4: 300,
+            5: 400,
+            6: 500,
+        },
+    )
+    ```
 
-1. `pmt: float` - Based on the initial parameters of the loan,
+### **Loan Properties**: Retrieving calculated loan properties & attributes
+
+Once a `Loan` object has been instantiated, with user inputs,
+the following properties/attributes would be available:
+
+1. `#!python pmt: float` - Based on the initial parameters of the loan,
 the attribute reflects the original equated installment amount.
-2.  `original_cfs: pd.DataFrame` - A dataframe with the original
+2.  `#!python original_cfs: pandas.DataFrame` - A dataframe with the original
 schedule of cashflows based on the loan parameters is returned. This
 does not include the additional payments made.
-3. `updated_cfs: pd.DataFrame` - A dataframe with the modified
+3. `#!python updated_cfs: pandas.DataFrame` - A dataframe with the modified
 schedule of cashflows based on the loan parameters is returned. This
 considers the additional payments made.
-4. `fully_prepaid: int` - A flag like parameter to indicate of the loan
-was fully pre-paid. In case the loan in fully pre-paid, no additional
-payments can be specified and hence there cannot be further
-modifications to the cashflows.
+4.
 
->**Examples:**
-```python
-from pyloans import Loan as pyl
+!!! Example "*Example: Retrieving key properties of the Loan*"
 
-l1 = pyl.Loan(
-    loan_amt=20000,
-    interest_rate=0.1099,
-    term_in_months=60,
-    loan_dt="2022-12-12",
-    freq="M",
-    addl_pmts={
-        3: 200,
-        4: 300,
-        5: 400,
-        6: 500,
-    },
-)
+     ```python
+     # Once an instance of Loan is created, we can retrieve various
+     # attributes of the instance as shown below:
 
-# Get the original schedule of cashflows without considering additional
-# payments, if any:
+     l1 = pyl.Loan(
+         loan_amt=20000,
+         interest_rate=0.1099,
+         term_in_months=60,
+         loan_dt="2022-12-12",
+     )
 
-l1.original_cfs
+     # Get un-modified loan roperties/attributes
 
-# Get the modified schedule of cashflows considering addition payments,
-# if any:
+     l1.pmt  # installment amount on the loan
+     l1.original_cfs  # original un-modified schedule of cashflows
+     l1.original_wal  # original un-modified weihted average life
+     l1.original_apr  # original un-modified annual percentage rate
+     l1.org_maturity_period  # number of periods corresponding to term
 
-l1.updated_cfs
-```
-    """
+     # Incase there were additional paymemnts provided  or if the loan was
+     # updated (see below), the modified properties can be retrieved as below:
+
+     l1.mod_cfs  # modified schedule of cashflows after an update
+     l1.mod_wal  # modified weihted average life after an update
+     l1.mod_apr  # modified annual percentage rate after an update
+     l1.mod_maturity_period  # number of periods after an update
+     ```
+
+### **Updating**: Modifying an existing Loan instance
+
+4. `fully_prepaid: int` - A flag to indicate of the loan was fully pre-paid.
+In case the loan in fully pre-paid, no additional payments can be specified
+and hence there cannot be further modifications to the cashflows.
+
+
+### **Re-setting**: Re-setting additional payments for a Loan instance

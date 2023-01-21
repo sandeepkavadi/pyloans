@@ -18,13 +18,13 @@ theme:
   palette:
     - scheme: slate
       primary: indigo
-      accent: indigo
+      accent: blue
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
     - scheme: default
-      primary: green
-      accent: green
+      primary: deep purple
+      accent: purple
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -60,7 +60,7 @@ repo_name: sandeepkavadi/pyloans
 nav:
   - Home: index.md
   - Quickstart Guide: quickstart.md
-  - Loan (class): loan.md
+  - Loan: loan.md
 
 # Extras
 markdown_extensions:

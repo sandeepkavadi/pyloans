@@ -133,7 +133,7 @@ class Loan:
                           24.99% """,
         },
         'term_in_months': {
-            'type': (float, int), 'min': 0.0, 'max': 1200,
+            'type': (float, int), 'min': 1.0, 'max': 1200,
             'vals': (), 'hint': """typically  <= 80 for personal
                            loans, most common terms are multiples of 6 months
                            """,
@@ -141,7 +141,7 @@ class Loan:
         'loan_dt': {
             'type': (dt.datetime, dt.date), 'min': None, 'max': None,
             'vals': (), 'hint': """Any valid dates strings in
-                    'YYY-mm-dd' format, recommended to be after 1970-01-01
+                    'YYYY-mm-dd' format, recommended to be after 1970-01-01
                     to avoid any unexpected errors.""",
         },
         'freq': {
